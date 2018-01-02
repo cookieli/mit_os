@@ -49,7 +49,7 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 	cprintf("  etext  %08x (virt)  %08x (phys)\n", etext, etext - KERNBASE);
 	cprintf("  edata  %08x (virt)  %08x (phys)\n", edata, edata - KERNBASE);
 	cprintf("  end    %08x (virt)  %08x (phys)\n", end, end - KERNBASE);
-	cprintf("Kernel executable memory footprint: %dKB\n",
+	cprintf("Kernel executable memory footprint: %KB\n",
 		ROUNDUP(end - entry, 1024) / 1024);
 	return 0;
 }
@@ -58,6 +58,28 @@ int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
+	struct Eipdebuginfo info;
+	info.eip_file = "<unknown>";
+	info.eip_line = 0;
+	info.eip_fn_name = "<unknown>";
+	info.eip_fn_namelen = 9;
+	info.eip_fn_addr = 0;
+	info.eip_fn_narg = 0;
+        cprintf("Stack backtrace:\n");
+	uint32_t ebp = read_ebp() ;
+	uint32_t eip = *((uint32_t*) ebp + 1);
+	while(ebp != 0){
+		debuginfo_eip(eip , &info);
+		cprintf("  ebp %08x  eip %08x  args ",ebp,eip);
+		uint32_t* args = (uint32_t*)ebp + 2;
+		for(int i = 0 ; i < 5 ; i++) {
+			cprintf("%08x ",args[i]);
+		}
+		cprintf("\n");
+		cprintf("         %s:%d: %.*s+%d\n" , info.eip_file, info.eip_line,info.eip_fn_namelen,info.eip_fn_name,(eip-info.eip_fn_addr));
+		ebp = ((uint32_t*)ebp)[0];
+		eip = ((uint32_t*)ebp)[1];
+	}
 	return 0;
 }
 
