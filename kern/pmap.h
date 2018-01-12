@@ -65,7 +65,7 @@ void	tlb_invalidate(pde_t *pgdir, void *va);
 static inline physaddr_t
 page2pa(struct PageInfo *pp)
 {
-	return (pp - pages) << PGSHIFT;
+	return (pp - pages) << PGSHIFT;//PGSHIFT =12
 }
 
 static inline struct PageInfo*

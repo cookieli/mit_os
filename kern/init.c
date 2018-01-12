@@ -9,8 +9,8 @@
 #include <kern/pmap.h>
 #include <kern/kclock.h>
 
-<<<<<<< HEAD
-=======
+//<<<<<<< HEAD
+//=======
 // Test the stack backtrace function (lab 1 only)
 void
 test_backtrace(int x)
