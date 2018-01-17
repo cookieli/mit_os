@@ -10,7 +10,7 @@
 #include <kern/console.h>
 #include <kern/monitor.h>
 #include <kern/kdebug.h>
-
+#include <kern/pmap.h>
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
 
@@ -24,6 +24,9 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{"backtrace", "Display information about the trace", mon_backtrace},
+	{"showmapping","Show the physical mappings", showmapping},
+	{"set_memory", "set the permission bits", set_memory}
 };
 
 /***** Implementations of basic kernel monitor commands *****/
@@ -82,8 +85,67 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 	}
 	return 0;
 }
-
-
+void
+pprint(pte_t *pte)
+{
+	cprintf("PTE_P: %x, PTE_W: %x, PTE_U: %x", *pte&PTE_P, *pte&PTE_W, *pte&PTE_U);
+}
+uint32_t
+str_convert_addr(char *str)
+{
+	uint32_t ret = 0;
+	str += 2;
+	while(*str){
+		if (*str > 'a')
+			*str = *str - 'a' + '0' + 10;
+		ret = ret * 16 + (*str -'0');
+		str++;
+	}
+	return ret;
+}
+int
+showmapping(int argc, char **argv, struct Trapframe *tf)
+{
+	if (argc <= 2){
+		cprintf("this prompt need begin and end address\n");
+		return -1;
+	}
+	uint32_t begin = str_convert_addr(argv[1]);
+	uint32_t end   = str_convert_addr(argv[2]);
+	cprintf("begin address: %x, end address: %x\n", begin, end);
+	for(; begin <= end ; begin += PGSIZE){
+		pte_t *pte = pgdir_walk(kern_pgdir, (void*)begin ,1);
+		if(!pte) panic("this pte doesn't exist'");
+		if(*pte & PTE_P){
+			cprintf("pte:%x with:", begin);
+			pprint(pte);
+			cprintf("\n");
+		}else
+			cprintf("this pte can't be accessed");
+	}
+	return 0;
+}
+int
+set_memory(int argc, char **argv, struct Trapframe *tf)
+{
+	int perm = 0;
+	if(argc <= 3){
+		cprintf("this prompt need other args\n");
+		return -1;
+	}
+	uint32_t addr = str_convert_addr(argv[1]);
+	pte_t *pte = pgdir_walk(kern_pgdir, (void*)addr, 1);
+	if(!pte) panic("this pte doesn't exist");
+	if(argv[2][0] == 'U')  perm = PTE_U ;
+	if(argv[2][0] == 'P')  perm = PTE_P ;
+	if(argv[2][0] == 'W')  perm = PTE_W ;
+	if(argv[3][0] == '0')
+		*pte = *pte & ~perm;
+	else
+		*pte = *pte & perm;
+	cprintf("pte: %x PTE_%c changes to %c", addr, argv[2][0], argv[3][0]);
+	return 0;
+}
 
 /***** Kernel monitor command interpreter *****/
 
