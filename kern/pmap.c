@@ -164,6 +164,10 @@ mem_init(void)
 	//////////////////////////////////////////////////////////////////////
 	// Make 'envs' point to an array of size 'NENV' of 'struct Env'.
 	// LAB 3: Your code here.
+	envs = (struct Env*) boot_alloc(NENV *sizeof(struct Env));
+//	for(int i = 0 ; i < NENV ; i++){
+//		memset(&envs[i], 0, sizeof(struct Env));
+//	}
 
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
@@ -187,7 +191,7 @@ mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
-	cprintf("PDX(UPAGES): %d\n", PDX(UPAGES));//956
+//	cprintf("PDX(UPAGES): %d\n", PDX(UPAGES));//956
 	boot_map_region(kern_pgdir, UPAGES, PTSIZE, PADDR(pages), PTE_U);
 
 	//////////////////////////////////////////////////////////////////////
@@ -197,7 +201,7 @@ mem_init(void)
 	//    - the new image at UENVS  -- kernel R, user R
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 3: Your code here.
-
+	boot_map_region(kern_pgdir, UENVS, PTSIZE, PADDR(envs), PTE_U);
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
 	// stack.  The kernel stack grows down from virtual address KSTACKTOP.
@@ -209,7 +213,7 @@ mem_init(void)
 	//       overwrite memory.  Known as a "guard page".
 	//     Permissions: kernel RW, user NONE
 	// Your code goes here:
-	cprintf("PDX(KSTACKTOP- KSTKSIZE) : %d\n",PDX(KSTACKTOP-KSTKSIZE));//959
+
 	boot_map_region(kern_pgdir, KSTACKTOP-KSTKSIZE, KSTKSIZE, PADDR(bootstack), PTE_W);
 
 	//////////////////////////////////////////////////////////////////////
@@ -220,7 +224,7 @@ mem_init(void)
 	// we just set up the mapping anyway.
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
-	cprintf("PDX(KERNBASE): %d, PDX(0xffffffff): %d\n", PDX(KERNBASE), PDX(0xffffffff));
+
 	boot_map_region(kern_pgdir, KERNBASE, (0xffffffff - KERNBASE), 0, PTE_W);
 	// Check that the initial page directory has been set up correctly.
 	check_kern_pgdir();

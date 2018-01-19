@@ -15,7 +15,7 @@
 
 //=======
 #include <kern/pmap.h>
->>>>>>> lab2
+//>>>>>>> lab2
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
 
