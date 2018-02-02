@@ -14,6 +14,7 @@
 // Print a string to the system console.
 // The string is exactly 'len' characters long.
 // Destroys the environment on memory errors.
+static envid_t sys_getenvid(void);
 static void
 sys_cputs(const char *s, size_t len)
 {
@@ -21,6 +22,10 @@ sys_cputs(const char *s, size_t len)
 	// Destroy the environment if not.
 
 	// LAB 3: Your code here.
+	struct Env *e;
+	envid_t id = sys_getenvid();
+	envid2env(id, &e, 1);
+	user_mem_assert(e, (void *) s, len, PTE_U);
 
 	// Print the string supplied by the user.
 	cprintf("%.*s", len, s);
@@ -69,12 +74,25 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
 	// LAB 3: Your code here.
-
-	panic("syscall not implemented");
-
+	int32_t ret = 0;
 	switch (syscallno) {
+	case SYS_cputs:
+		sys_cputs((char *)a1, a2);
+		ret = 0;
+		break;
+	case SYS_cgetc:
+		ret = sys_cgetc();
+		break;
+	case SYS_env_destroy:
+		ret = sys_env_destroy(a1);
+		break;
+	case SYS_getenvid:
+		ret = sys_getenvid();
+		break;
 	default:
 		return -E_INVAL;
 	}
+	return ret;
+	panic("syscall not implemented");
 }
 

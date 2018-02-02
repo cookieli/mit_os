@@ -116,7 +116,7 @@ env_init(void)
 {
 	// Set up envs array
 	// LAB 3: Your code here.
-	for(int i = NENV - 1; i > 0; i--){
+	for(int i = NENV - 1; i >= 0; i--){
 		envs[i].env_id = 0;
 		envs[i].env_link = env_free_list ;
 		env_free_list = envs + i;
@@ -274,16 +274,13 @@ region_alloc(struct Env *e, void *va, size_t len)
 	//   (Watch out for corner-cases!)
 	struct PageInfo *pp;
 	void *begin = ROUNDDOWN(va, PGSIZE);
-	void *end = ROUNDDOWN(va, PGSIZE);
-	for( ; begin < end ; va += PGSIZE) {
-		if(!(pp = page_alloc(0))) panic("can't alloc pages");
-		page_insert(e->env_pgdir, pp, va, PTE_U|PTE_W);
+	void *end = ROUNDUP((va + len), PGSIZE);
+	for( ; begin < end ; begin += PGSIZE){
+		pp = page_alloc(0);
+		if(!pp) panic("region alloc failed!");
+		page_insert(e->env_pgdir, pp, begin, PTE_W|PTE_U);
 	}
-
 }
-
-//
-// Set up the initial program binary, stack, and processor flags
 // for a user process.
 // This function is ONLY called during kernel initialization,
 // before running the first user-mode environment.
@@ -355,7 +352,7 @@ load_icode(struct Env *e, uint8_t *binary)
 			memcpy((void*)ph->p_va, (void*)(binary+ph->p_offset), ph->p_filesz);
 		}
 	}
-	lcr3(PADDR(kern_pgdir));
+        lcr3(PADDR(kern_pgdir));
 	e->env_tf.tf_eip = (uintptr_t)elf->e_entry;
 	region_alloc(e, (void*)(USTACKTOP - PGSIZE), PGSIZE);
 }
@@ -502,6 +499,6 @@ env_run(struct Env *e)
 	lcr3(PADDR(curenv->env_pgdir));
 	env_pop_tf(&curenv->env_tf);
 
-	//panic("env_run not yet implemented");
+        //panic("env_run not yet implemented");
 }
 
