@@ -505,7 +505,6 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	pp->pp_ref++;
 	if(*pte & PTE_P)
 		page_remove(pgdir, va);
-	
 	*pte = page2pa(pp) | perm | PTE_P;
 
 	return 0;
