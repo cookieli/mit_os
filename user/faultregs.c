@@ -65,8 +65,9 @@ check_regs(struct regs* a, const char *an, struct regs* b, const char *bn,
 #undef CHECK
 
 	cprintf("Registers %s ", testname);
-	if (!mismatch)
+	if (!mismatch){
 		cprintf("OK\n");
+	}
 	else
 		cprintf("MISMATCH\n");
 }
