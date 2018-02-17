@@ -500,7 +500,7 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	pte_t *pte;
 	pte = pgdir_walk(pgdir, va, 1);
 	if(!pte)  {
-		return -1;
+		return -E_NO_MEM;
 	}
 	pp->pp_ref++;
 	if(*pte & PTE_P)
@@ -644,7 +644,7 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
-	cprintf("user_mem_check: va: %x, len %x\n", va, len);
+//cprintf("user_mem_check: va: %x, len %x\n", va, len);
 	uint32_t begin = (uint32_t)ROUNDDOWN(va, PGSIZE);
 	uint32_t end   = (uint32_t)ROUNDUP(va+len, PGSIZE);
 	uint32_t i;
@@ -655,7 +655,7 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 			return -E_FAULT;
 		}
 	}
-	cprintf("user_mem_check success!\n");
+//	cprintf("user_mem_check success!\n");
 	return 0;
 }
 
