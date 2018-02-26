@@ -38,7 +38,7 @@ pgfault(struct UTrapframe *utf)
 	addr = ROUNDDOWN(addr, PGSIZE);
 	if (sys_page_alloc(0, (void *)PFTEMP, PTE_W|PTE_U|PTE_P) < 0)
 		panic("can't alloc page");
-	memcpy((void *)PFTEMP, addr, PGSIZE);
+	memmove(addr, PFTEMP, PGSIZE);
 	if(sys_page_map(0, PFTEMP, 0, addr, PTE_W|PTE_U|PTE_P) < 0)
 		panic("sys_page_map");
 	if(sys_page_unmap(0, PFTEMP) < 0)
@@ -65,6 +65,13 @@ duppage(envid_t envid, unsigned pn)
 
 	// LAB 4: Your code here.
 	void *addr = (void *)(pn * PGSIZE);
+	if(uvpt[pn] & PTE_SHARE){
+		if((r = sys_page_map(0, addr, envid, addr, (uvpt[pn]&PTE_SYSCALL))) < 0){
+			cprintf("5");
+			return r;
+		}
+		return 0;
+	}
 	if(uvpt[pn]&PTE_W || uvpt[pn]&PTE_COW){
 		if(sys_page_map(0, addr, envid, addr, PTE_P|PTE_U|PTE_COW) < 0)
 			panic("2");
@@ -75,7 +82,6 @@ duppage(envid_t envid, unsigned pn)
 //	panic("duppage not implemented");
 	return 0;
 }
-
 //
 // User-level fork with copy-on-write.
 // Set up our page fault handler appropriately.
@@ -97,7 +103,8 @@ fork(void)
 {
 	envid_t envid; 
 	uint32_t addr;
-	set_pgfault_handler(pgfault);
+	if(!thisenv->env_pgfault_upcall)
+		set_pgfault_handler(pgfault);
 	envid = sys_exofork();
 	if (envid < 0)
 		panic("sys_exofork: %e", envid);
@@ -114,10 +121,8 @@ fork(void)
 	if (sys_page_alloc(envid, (void *)(UXSTACKTOP - PGSIZE), PTE_W|PTE_P|PTE_U) < 0)
 		panic("1");
 	extern void _pgfault_upcall(void);
-//	void(*_pgfault_handler)(struct UTrapframe *utf);
 	if(sys_env_set_pgfault_upcall(envid, (void *)_pgfault_upcall) < 0)
 		panic("upcall");
-//	_pgfault_handler = pgfault;
 	if(sys_env_set_status(envid, ENV_RUNNABLE) < 0)
 		panic("5");
 	return envid;
