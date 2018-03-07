@@ -38,7 +38,7 @@ pgfault(struct UTrapframe *utf)
 	addr = ROUNDDOWN(addr, PGSIZE);
 	if (sys_page_alloc(0, (void *)PFTEMP, PTE_W|PTE_U|PTE_P) < 0)
 		panic("can't alloc page");
-	memmove(addr, PFTEMP, PGSIZE);
+	memmove(PFTEMP, addr, PGSIZE);
 	if(sys_page_map(0, PFTEMP, 0, addr, PTE_W|PTE_U|PTE_P) < 0)
 		panic("sys_page_map");
 	if(sys_page_unmap(0, PFTEMP) < 0)

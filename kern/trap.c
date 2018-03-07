@@ -380,7 +380,7 @@ page_fault_handler(struct Trapframe *tf)
 	fault_va = rcr2();
 
 	// Handle kernel-mode page faults.
-	if((tf->tf_cs & 3) == 0){
+	if(tf->tf_cs == GD_KT){
 		print_trapframe(tf);
 		panic("a page fault happens in kernel mode");
 	}
@@ -439,7 +439,6 @@ page_fault_handler(struct Trapframe *tf)
 		curenv->env_tf.tf_eip = (uintptr_t)curenv->env_pgfault_upcall;
 		env_run(curenv);
 	}
-
 	// Destroy the environment that caused the fault.
 	cprintf("[%08x] user fault va %08x ip %08x\n",
 		curenv->env_id, fault_va, tf->tf_eip);
